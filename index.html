@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="pt-br">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Lista de Compras</title>
+
+    <style>
+      body {
+        font-family: "Segoe UI", sans-serif;
+        background: #0b0f1a;
+        display: flex;
+        justify-content: center;
+        margin: 0;
+        padding: 40px;
+        color: white;
+      }
+
+      .container {
+        background: #121826;
+        padding: 25px;
+        border-radius: 16px;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+        width: 380px;
+      }
+
+      h2 {
+        text-align: center;
+        margin-bottom: 20px;
+        color: #6cff72;
+      }
+
+      input {
+        width: 100%;
+        padding: 10px;
+        margin-bottom: 10px;
+        border: none;
+        border-radius: 8px;
+        background: #1e2538;
+        color: white;
+        outline: none;
+      }
+
+      input::placeholder {
+        color: #aaa;
+      }
+
+      input:focus {
+        border: 1px solid #6cff72;
+      }
+
+      button {
+        padding: 8px 12px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: bold;
+        transition: 0.2s;
+      }
+
+      .btn-add {
+        width: 100%;
+        background: #6cff72;
+        color: black;
+        margin-top: 5px;
+      }
+
+      .btn-add:hover {
+        background: #5be066;
+      }
+
+      ul {
+        list-style: none;
+        padding: 0;
+        margin-top: 15px;
+      }
+
+      li {
+        background: #1e2538;
+        padding: 12px;
+        border-radius: 10px;
+        margin-bottom: 10px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .item-text {
+        flex: 1;
+        font-size: 14px;
+        color: #e0e0e0;
+      }
+
+      .comprado {
+        text-decoration: line-through;
+        color: #777;
+      }
+
+      .acoes button {
+        margin-left: 6px;
+      }
+
+      .acoes button:first-child {
+        background: #4fd1c5;
+        color: black;
+      }
+
+      .acoes button:first-child:hover {
+        background: #3bb3a8;
+      }
+
+      .acoes button:last-child {
+        background: #ff4d4d;
+        color: white;
+      }
+
+      .acoes button:last-child:hover {
+        background: #e03b3b;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="container">
+      <h2>🛒 Minha Lista</h2>
+
+      <input type="text" id="nome" placeholder="Nome do item" />
+      <input type="text" id="descricao" placeholder="Descrição" />
+      <input type="number" id="quantidade" placeholder="Quantidade" />
+
+      <button class="btn-add" onclick="adicionarItem()">Adicionar</button>
+
+      <hr />
+
+      <h3>Itens:</h3>
+      <ul id="lista"></ul>
+    </div>
+
+    <script>
+      class Item {
+        constructor(nome, descricao, quantidade) {
+          this.nome = nome;
+          this.descricao = descricao;
+          this.quantidade = quantidade;
+          this.comprado = false;
+        }
+
+        marcarComoComprado() {
+          this.comprado = true;
+        }
+
+        marcarComoPendente() {
+          this.comprado = false;
+        }
+      }
+
+      class Lista {
+        constructor() {
+          this.itens = [];
+        }
+
+        adicionarItem(item) {
+          this.itens.push(item);
+        }
+
+        removerItem(index) {
+          this.itens.splice(index, 1);
+        }
+
+        marcarItem(index) {
+          const item = this.itens[index];
+          item.comprado = !item.comprado;
+        }
+      }
+
+      let dadosSalvos = JSON.parse(localStorage.getItem("lista"));
+      let lista = new Lista();
+
+      if (dadosSalvos) {
+        dadosSalvos.itens.forEach((i) => {
+          const item = new Item(i.nome, i.descricao, i.quantidade);
+          item.comprado = i.comprado;
+          lista.adicionarItem(item);
+        });
+      }
+
+      function adicionarItem() {
+        const nome = document.getElementById("nome").value.trim();
+        const descricao = document.getElementById("descricao").value;
+        const quantidade =
+          parseInt(document.getElementById("quantidade").value) || 1;
+
+        if (!nome) {
+          alert("Digite o nome do item!");
+          return;
+        }
+
+        const item = new Item(nome, descricao, quantidade);
+        lista.adicionarItem(item);
+
+        salvar();
+        atualizarLista();
+
+        document.getElementById("nome").value = "";
+        document.getElementById("descricao").value = "";
+        document.getElementById("quantidade").value = "";
+      }
+
+      function atualizarLista() {
+        const ul = document.getElementById("lista");
+        ul.innerHTML = "";
+
+        lista.itens.forEach((item, index) => {
+          const li = document.createElement("li");
+
+          li.innerHTML = `
+                <span class="item-text ${item.comprado ? "comprado" : ""}">
+                    ${item.nome} - ${item.descricao} (Quantidade: ${item.quantidade})
+                </span>
+                <div class="acoes">
+                    <button onclick="marcar(${index})">✔</button>
+                    <button onclick="remover(${index})">🗑</button>
+                </div>
+            `;
+
+          ul.appendChild(li);
+        });
+      }
+
+      function marcar(index) {
+        lista.marcarItem(index);
+        salvar();
+        atualizarLista();
+      }
+
+      function remover(index) {
+        if (confirm("Deseja remover este item?")) {
+          lista.removerItem(index);
+          salvar();
+          atualizarLista();
+        }
+      }
+
+      function salvar() {
+        localStorage.setItem("lista", JSON.stringify(lista));
+      }
+
+      atualizarLista();
+    </script>
+  </body>
+</html>
